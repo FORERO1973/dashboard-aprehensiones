@@ -2346,3 +2346,44 @@
             nextBtn.onclick = () => { currentPage++; updateTable(); };
             controls.appendChild(nextBtn);
         }
+
+        function sortTable(col) {
+            if (sortColumn === col) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = col;
+                sortDirection = 'asc';
+            }
+            updateTable();
+        }
+
+        function searchTable() {
+            currentPage = 1;
+            updateTable();
+        }
+
+        function exportToCSV() {
+            if (filteredData.length === 0) return;
+
+            const headers = ['ACTA', 'FECHA', 'ESTABLECIMIENTO', 'PROPIETARIO', 'MUNICIPIO', 'DIRECCION', 'CAUSAL', 'LIDER'];
+            const rows = filteredData.map(d => [
+                d.acta,
+                formatDate(d.fecha),
+                `"${d.establecimiento}"`,
+                `"${d.propietario}"`,
+                d.municipio,
+                d.direccion,
+                `"${d.causal}"`,
+                d.lider
+            ]);
+
+            const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `aprehensiones_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+    </script>
+</body>
+</html>
