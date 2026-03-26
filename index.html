@@ -1,0 +1,2348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Aprehensiones</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --primary-dark: #4f46e5;
+            --secondary: #06b6d4;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #334155;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --gradient-4: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --gradient-5: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --gradient-6: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+            --shadow: 0 10px 40px rgba(0,0,0,0.3);
+            --shadow-sm: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(ellipse at 20% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(6, 182, 212, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(245, 158, 11, 0.04) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app-container {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 70px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            background: var(--gradient-1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .logo h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f1f5f9, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo span {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-date {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Upload Section */
+        .upload-section {
+            max-width: 1600px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .upload-container {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(20px);
+            border: 2px dashed var(--border);
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--gradient-1);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .upload-container:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.15);
+        }
+
+        .upload-container:hover::before {
+            opacity: 0.03;
+        }
+
+        .upload-container.dragover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .upload-container.loaded {
+            border-color: var(--success);
+            border-style: solid;
+        }
+
+        .upload-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .upload-icon i {
+            font-size: 2rem;
+            color: var(--primary-light);
+        }
+
+        .upload-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .upload-subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .upload-btn {
+            background: var(--gradient-1);
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            z-index: 1;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+        }
+
+        .upload-btn:active {
+            transform: translateY(0);
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            margin-top: 1.5rem;
+            display: none;
+            position: relative;
+            z-index: 1;
+        }
+
+        .progress-container.active {
+            display: block;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .progress-bar-track {
+            width: 100%;
+            height: 8px;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--gradient-1);
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .progress-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .file-info {
+            margin-top: 1rem;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 12px;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            position: relative;
+            z-index: 1;
+        }
+
+        .file-info.active {
+            display: inline-flex;
+        }
+
+        .file-info i {
+            color: var(--success);
+        }
+
+        .file-info span {
+            color: var(--success);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        /* Dashboard Content */
+        .dashboard {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0 2rem 2rem;
+            display: none;
+        }
+
+        .dashboard.active {
+            display: block;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Filters Section */
+        .filters-section {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .filters-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+        }
+
+        .filters-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .filters-title i {
+            color: var(--primary-light);
+        }
+
+        .filters-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-clear {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-clear:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-group label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .filter-group select:focus,
+        .filter-group input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+
+        .filter-group select option {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .active-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .filter-tag {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            color: var(--primary-light);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .filter-tag .remove {
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .filter-tag .remove:hover {
+            opacity: 1;
+        }
+
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .kpi-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow);
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+
+        .kpi-card:nth-child(1)::before { background: var(--gradient-1); }
+        .kpi-card:nth-child(2)::before { background: var(--gradient-3); }
+        .kpi-card:nth-child(3)::before { background: var(--gradient-4); }
+        .kpi-card:nth-child(4)::before { background: var(--gradient-5); }
+        .kpi-card:nth-child(5)::before { background: var(--gradient-2); }
+
+        .kpi-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .kpi-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .kpi-card:nth-child(1) .kpi-icon { background: rgba(99, 102, 241, 0.15); color: var(--primary-light); }
+        .kpi-card:nth-child(2) .kpi-icon { background: rgba(6, 182, 212, 0.15); color: var(--secondary); }
+        .kpi-card:nth-child(3) .kpi-icon { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .kpi-card:nth-child(4) .kpi-icon { background: rgba(245, 158, 11, 0.15); color: var(--accent); }
+        .kpi-card:nth-child(5) .kpi-icon { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+
+        .kpi-trend {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .kpi-trend.up {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .kpi-trend.down {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .kpi-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 0.25rem;
+        }
+
+        .kpi-card:nth-child(1) .kpi-value { color: var(--primary-light); }
+        .kpi-card:nth-child(2) .kpi-value { color: var(--secondary); }
+        .kpi-card:nth-child(3) .kpi-value { color: var(--success); }
+        .kpi-card:nth-child(4) .kpi-value { color: var(--accent); }
+        .kpi-card:nth-child(5) .kpi-value { color: var(--danger); }
+
+        .kpi-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Leader Cards Section */
+        .leaders-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: var(--primary-light);
+        }
+
+        .section-badge {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary-light);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .leaders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1rem;
+        }
+
+        .leader-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.25rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .leader-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-sm);
+            border-color: var(--primary);
+        }
+
+        .leader-card-top {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .leader-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .leader-card:nth-child(1) .leader-avatar { background: var(--gradient-1); }
+        .leader-card:nth-child(2) .leader-avatar { background: var(--gradient-3); }
+        .leader-card:nth-child(3) .leader-avatar { background: var(--gradient-4); }
+        .leader-card:nth-child(4) .leader-avatar { background: var(--gradient-5); }
+        .leader-card:nth-child(5) .leader-avatar { background: var(--gradient-2); }
+        .leader-card:nth-child(6) .leader-avatar { background: var(--gradient-6); }
+        .leader-card:nth-child(7) .leader-avatar { background: var(--gradient-1); }
+        .leader-card:nth-child(8) .leader-avatar { background: var(--gradient-3); }
+
+        .leader-info h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .leader-info p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .leader-rank {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .leader-rank.gold {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .leader-rank.silver {
+            background: rgba(148, 163, 184, 0.15);
+            color: var(--text-secondary);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+        }
+
+        .leader-rank.bronze {
+            background: rgba(180, 120, 80, 0.15);
+            color: #d4956b;
+            border: 1px solid rgba(180, 120, 80, 0.3);
+        }
+
+        .leader-rank.normal {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary-light);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .leader-stats {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .leader-stat {
+            flex: 1;
+            background: rgba(15, 23, 42, 0.4);
+            padding: 8px 12px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .leader-stat-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-light);
+        }
+
+        .leader-stat-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        /* Charts Section */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .chart-card:hover {
+            box-shadow: var(--shadow-sm);
+        }
+
+        .chart-card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+        }
+
+        .chart-title {
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-title i {
+            color: var(--primary-light);
+            font-size: 0.9rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .chart-container.tall {
+            height: 400px;
+        }
+
+        /* Table Section */
+        .table-section {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .table-title {
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .table-title i {
+            color: var(--primary-light);
+        }
+
+        .table-search {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 8px 14px;
+            transition: all 0.3s ease;
+        }
+
+        .table-search:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+
+        .table-search i {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .table-search input {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            outline: none;
+            width: 200px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .table-search input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 12px;
+        }
+
+        .table-wrapper::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .table-wrapper::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        thead th {
+            background: rgba(99, 102, 241, 0.1);
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--primary-light);
+            white-space: nowrap;
+            border-bottom: 2px solid rgba(99, 102, 241, 0.2);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        thead th:hover {
+            background: rgba(99, 102, 241, 0.15);
+        }
+
+        tbody tr {
+            transition: all 0.2s ease;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.3);
+        }
+
+        tbody tr:hover {
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        tbody td {
+            padding: 12px 16px;
+            white-space: nowrap;
+            color: var(--text-secondary);
+        }
+
+        .cell-acta {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .cell-establecimiento {
+            max-width: 250px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .cell-municipio {
+            display: inline-flex;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary-light);
+        }
+
+        .cell-causal {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .cell-causal-tag {
+            display: inline-flex;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.73rem;
+            font-weight: 500;
+        }
+
+        .causal-vencido { background: rgba(239, 68, 68, 0.1); color: #f87171; }
+        .causal-estampilla { background: rgba(245, 158, 11, 0.1); color: #fbbf24; }
+        .causal-senalizacion { background: rgba(6, 182, 212, 0.1); color: #22d3ee; }
+        .causal-ingreso { background: rgba(168, 85, 247, 0.1); color: #c084fc; }
+
+        .cell-lider-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            background: rgba(16, 185, 129, 0.1);
+            color: #34d399;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 1.25rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .pagination-info {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .page-btn {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+        }
+
+        .page-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary-light);
+        }
+
+        .page-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .export-btn {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: var(--success);
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .export-btn:hover {
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                height: auto;
+                padding: 1rem 0;
+                gap: 0.75rem;
+            }
+
+            .upload-container {
+                padding: 2rem 1.5rem;
+            }
+
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .leaders-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .table-search input {
+                width: 150px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .upload-section,
+            .dashboard {
+                padding: 0 1rem;
+            }
+        }
+
+        /* Animation classes */
+        .animate-in {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+        .delay-5 { animation-delay: 0.5s; }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+        }
+
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            border: 1px solid var(--border);
+            z-index: 50;
+        }
+
+        .tooltip:hover::after {
+            opacity: 1;
+        }
+
+        /* No data state */
+        .no-data {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        .no-data i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--border);
+        }
+
+        .no-data h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        /* Results counter */
+        .results-counter {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .results-counter strong {
+            color: var(--primary-light);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* Loading skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+            border-radius: 8px;
+        }
+
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-shield-halved"></i>
+                    </div>
+                    <div>
+                        <h1>APREHENSIONES</h1>
+                        <span>Sistema de Gestión y Control</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <div class="header-date">
+                        <i class="far fa-calendar-alt"></i>
+                        <span id="currentDate"></span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Upload Section -->
+        <section class="upload-section">
+            <div class="upload-container" id="uploadContainer">
+                <div class="upload-icon">
+                    <i class="fas fa-cloud-arrow-up"></i>
+                </div>
+                <h2 class="upload-title">Cargar archivo de Aprehensiones</h2>
+                <p class="upload-subtitle">Arrastra y suelta tu archivo Excel aquí o haz clic para seleccionar</p>
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                    <i class="fas fa-file-excel"></i>
+                    Seleccionar Archivo Excel
+                </button>
+                <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" onchange="handleFile(event)">
+                
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-info">
+                        <span id="progressText">Cargando archivo...</span>
+                        <span id="progressPercent">0%</span>
+                    </div>
+                    <div class="progress-bar-track">
+                        <div class="progress-bar-fill" id="progressBar"></div>
+                    </div>
+                </div>
+
+                <div class="file-info" id="fileInfo">
+                    <i class="fas fa-check-circle"></i>
+                    <span id="fileName"></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard -->
+        <main class="dashboard" id="dashboard">
+            <!-- Filters -->
+            <section class="filters-section animate-in">
+                <div class="filters-header">
+                    <div class="filters-title">
+                        <i class="fas fa-sliders"></i>
+                        Filtros de Búsqueda
+                    </div>
+                    <div class="filters-actions">
+                        <button class="btn-clear" onclick="clearFilters()">
+                            <i class="fas fa-rotate-left"></i>
+                            Limpiar Filtros
+                        </button>
+                    </div>
+                </div>
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label><i class="fas fa-location-dot"></i> Municipio</label>
+                        <select id="filterMunicipio" onchange="applyFilters()">
+                            <option value="">Todos los municipios</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label><i class="fas fa-map-pin"></i> Dirección</label>
+                        <select id="filterDireccion" onchange="applyFilters()">
+                            <option value="">Todas las direcciones</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label><i class="fas fa-user-tie"></i> Líder</label>
+                        <select id="filterLider" onchange="applyFilters()">
+                            <option value="">Todos los líderes</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label><i class="fas fa-gavel"></i> Causal</label>
+                        <select id="filterCausal" onchange="applyFilters()">
+                            <option value="">Todas las causales</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label><i class="fas fa-calendar-day"></i> Fecha Inicio</label>
+                        <input type="date" id="filterFechaInicio" onchange="applyFilters()">
+                    </div>
+                    <div class="filter-group">
+                        <label><i class="fas fa-calendar-check"></i> Fecha Fin</label>
+                        <input type="date" id="filterFechaFin" onchange="applyFilters()">
+                    </div>
+                </div>
+                <div class="active-filters" id="activeFilters"></div>
+            </section>
+
+            <!-- KPI Cards -->
+            <section class="kpi-grid" id="kpiGrid">
+                <div class="kpi-card animate-in delay-1">
+                    <div class="kpi-header">
+                        <div class="kpi-icon"><i class="fas fa-file-lines"></i></div>
+                    </div>
+                    <div class="kpi-value" id="kpiTotal">0</div>
+                    <div class="kpi-label">Total Aprehensiones</div>
+                </div>
+                <div class="kpi-card animate-in delay-2">
+                    <div class="kpi-header">
+                        <div class="kpi-icon"><i class="fas fa-city"></i></div>
+                    </div>
+                    <div class="kpi-value" id="kpiMunicipios">0</div>
+                    <div class="kpi-label">Municipios</div>
+                </div>
+                <div class="kpi-card animate-in delay-3">
+                    <div class="kpi-header">
+                        <div class="kpi-icon"><i class="fas fa-store"></i></div>
+                    </div>
+                    <div class="kpi-value" id="kpiEstablecimientos">0</div>
+                    <div class="kpi-label">Establecimientos</div>
+                </div>
+                <div class="kpi-card animate-in delay-4">
+                    <div class="kpi-header">
+                        <div class="kpi-icon"><i class="fas fa-users"></i></div>
+                    </div>
+                    <div class="kpi-value" id="kpiLideres">0</div>
+                    <div class="kpi-label">Líderes Activos</div>
+                </div>
+                <div class="kpi-card animate-in delay-5">
+                    <div class="kpi-header">
+                        <div class="kpi-icon"><i class="fas fa-map-marker-alt"></i></div>
+                    </div>
+                    <div class="kpi-value" id="kpiDirecciones">0</div>
+                    <div class="kpi-label">Direcciones</div>
+                </div>
+            </section>
+
+            <!-- Leader Cards -->
+            <section class="leaders-section animate-in">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i class="fas fa-trophy"></i>
+                        Ranking de Líderes por Aprehensiones
+                    </div>
+                    <span class="section-badge" id="leadersBadge">Top Líderes</span>
+                </div>
+                <div class="leaders-grid" id="leadersGrid"></div>
+            </section>
+
+            <!-- Charts -->
+            <section class="charts-grid">
+                <div class="chart-card animate-in">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <i class="fas fa-chart-bar"></i>
+                            Aprehensiones por Municipio
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartMunicipio"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card animate-in">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <i class="fas fa-chart-pie"></i>
+                            Distribución por Causal
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartCausal"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card animate-in">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <i class="fas fa-ranking-star"></i>
+                            Top Líderes
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartLider"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card animate-in">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <i class="fas fa-map-location-dot"></i>
+                            Top Direcciones
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartDireccion"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card full-width animate-in">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <i class="fas fa-chart-line"></i>
+                            Tendencia Temporal de Aprehensiones
+                        </div>
+                    </div>
+                    <div class="chart-container tall">
+                        <canvas id="chartTendencia"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Data Table -->
+            <section class="table-section animate-in">
+                <div class="table-header">
+                    <div class="table-title">
+                        <i class="fas fa-table-list"></i>
+                        Registro de Aprehensiones
+                    </div>
+                    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+                        <div class="table-search">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="tableSearch" placeholder="Buscar en tabla..." oninput="searchTable()">
+                        </div>
+                        <button class="export-btn" onclick="exportToCSV()">
+                            <i class="fas fa-download"></i>
+                            Exportar CSV
+                        </button>
+                    </div>
+                </div>
+                <div class="results-counter">
+                    <i class="fas fa-filter"></i>
+                    Mostrando <strong id="showingCount">0</strong> de <strong id="totalCount">0</strong> registros
+                </div>
+                <div class="table-wrapper">
+                    <table id="dataTable">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable(0)">Acta <i class="fas fa-sort"></i></th>
+                                <th onclick="sortTable(1)">Fecha <i class="fas fa-sort"></i></th>
+                                <th onclick="sortTable(2)">Establecimiento <i class="fas fa-sort"></i></th>
+                                <th onclick="sortTable(3)">Propietario <i class="fas fa-sort"></i></th>
+                                <th onclick="sortTable(4)">Municipio <i class="fas fa-sort"></i></th>
+                                <th onclick="sortTable(5)">Dirección <i class="fas fa-sort"></i></th>
+                                <th onclick="sortTable(6)">Causal <i class="fas fa-sort"></i></th>
+                                <th onclick="sortTable(7)">Líder <i class="fas fa-sort"></i></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+                <div class="pagination">
+                    <div class="pagination-info" id="paginationInfo"></div>
+                    <div class="pagination-controls" id="paginationControls"></div>
+                </div>
+            </section>
+
+            <!-- Footer -->
+            <footer class="footer">
+                <p>Dashboard de Aprehensiones © 2025 — Sistema de Gestión y Control</p>
+            </footer>
+        </main>
+    </div>
+
+    <script>
+        // Global variables
+        let allData = [];
+        let filteredData = [];
+        let currentPage = 1;
+        const rowsPerPage = 15;
+        let sortColumn = -1;
+        let sortDirection = 'asc';
+        let charts = {};
+
+        // Set current date
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('es-ES', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+
+        // Drag and drop
+        const uploadContainer = document.getElementById('uploadContainer');
+
+        uploadContainer.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadContainer.classList.add('dragover');
+        });
+
+        uploadContainer.addEventListener('dragleave', () => {
+            uploadContainer.classList.remove('dragover');
+        });
+
+        uploadContainer.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadContainer.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) processFile(file);
+        });
+
+        function handleFile(event) {
+            const file = event.target.files[0];
+            if (file) processFile(file);
+        }
+
+        function processFile(file) {
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const progressPercent = document.getElementById('progressPercent');
+            const fileInfo = document.getElementById('fileInfo');
+            const fileName = document.getElementById('fileName');
+
+            progressContainer.classList.add('active');
+            fileInfo.classList.remove('active');
+
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 90) progress = 90;
+                progressBar.style.width = progress + '%';
+                progressPercent.textContent = Math.round(progress) + '%';
+                progressText.textContent = 'Procesando archivo...';
+            }, 100);
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+                    clearInterval(interval);
+                    progressBar.style.width = '100%';
+                    progressPercent.textContent = '100%';
+                    progressText.textContent = '¡Archivo cargado exitosamente!';
+
+                    setTimeout(() => {
+                        progressContainer.classList.remove('active');
+                        fileInfo.classList.add('active');
+                        fileName.textContent = `${file.name} — ${jsonData.length - 1} registros cargados`;
+                        uploadContainer.classList.add('loaded');
+
+                        parseData(jsonData);
+                    }, 500);
+                } catch (error) {
+                    clearInterval(interval);
+                    progressText.textContent = 'Error al procesar el archivo';
+                    progressBar.style.width = '100%';
+                    progressBar.style.background = 'var(--danger)';
+                    console.error(error);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function parseData(jsonData) {
+            const headers = jsonData[0];
+            allData = [];
+
+            for (let i = 1; i < jsonData.length; i++) {
+                const row = jsonData[i];
+                if (!row || row.length === 0 || !row[0]) continue;
+
+                let fecha = row[1];
+                if (fecha instanceof Date) {
+                    // Already a date
+                } else if (typeof fecha === 'number') {
+                    fecha = new Date((fecha - 25569) * 86400 * 1000);
+                } else if (typeof fecha === 'string') {
+                    fecha = new Date(fecha);
+                }
+
+                allData.push({
+                    acta: row[0] || '',
+                    fecha: fecha,
+                    establecimiento: row[2] || '',
+                    propietario: row[3] || '',
+                    municipio: row[4] || '',
+                    direccion: row[5] || '',
+                    causal: row[6] || '',
+                    lider: row[7] || ''
+                });
+            }
+
+            filteredData = [...allData];
+            populateFilters();
+            updateDashboard();
+            document.getElementById('dashboard').classList.add('active');
+        }
+
+        function populateFilters() {
+            const municipios = [...new Set(allData.map(d => d.municipio).filter(Boolean))].sort();
+            const direcciones = [...new Set(allData.map(d => d.direccion).filter(Boolean))].sort();
+            const lideres = [...new Set(allData.map(d => d.lider).filter(Boolean))].sort();
+            const causales = [...new Set(allData.map(d => d.causal).filter(Boolean))].sort();
+
+            fillSelect('filterMunicipio', municipios, 'Todos los municipios');
+            fillSelect('filterDireccion', direcciones, 'Todas las direcciones');
+            fillSelect('filterLider', lideres, 'Todos los líderes');
+            fillSelect('filterCausal', causales, 'Todas las causales');
+
+            // Set date range
+            const dates = allData.map(d => d.fecha).filter(d => d instanceof Date && !isNaN(d));
+            if (dates.length > 0) {
+                const minDate = new Date(Math.min(...dates));
+                const maxDate = new Date(Math.max(...dates));
+                document.getElementById('filterFechaInicio').value = formatDateInput(minDate);
+                document.getElementById('filterFechaFin').value = formatDateInput(maxDate);
+            }
+        }
+
+        function fillSelect(id, options, defaultText) {
+            const select = document.getElementById(id);
+            const currentValue = select.value;
+            select.innerHTML = `<option value="">${defaultText}</option>`;
+            options.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt;
+                option.textContent = opt;
+                select.appendChild(option);
+            });
+            select.value = currentValue;
+        }
+
+        function formatDateInput(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function formatDate(date) {
+            if (!(date instanceof Date) || isNaN(date)) return '';
+            return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
+        function applyFilters() {
+            const municipio = document.getElementById('filterMunicipio').value;
+            const direccion = document.getElementById('filterDireccion').value;
+            const lider = document.getElementById('filterLider').value;
+            const causal = document.getElementById('filterCausal').value;
+            const fechaInicio = document.getElementById('filterFechaInicio').value;
+            const fechaFin = document.getElementById('filterFechaFin').value;
+
+            filteredData = allData.filter(d => {
+                if (municipio && d.municipio !== municipio) return false;
+                if (direccion && d.direccion !== direccion) return false;
+                if (lider && d.lider !== lider) return false;
+                if (causal && d.causal !== causal) return false;
+                if (fechaInicio) {
+                    const fi = new Date(fechaInicio);
+                    if (d.fecha instanceof Date && d.fecha < fi) return false;
+                }
+                if (fechaFin) {
+                    const ff = new Date(fechaFin);
+                    ff.setHours(23, 59, 59);
+                    if (d.fecha instanceof Date && d.fecha > ff) return false;
+                }
+                return true;
+            });
+
+            // Update active filters display
+            updateActiveFilters(municipio, direccion, lider, causal, fechaInicio, fechaFin);
+
+            currentPage = 1;
+            updateDashboard();
+        }
+
+        function updateActiveFilters(municipio, direccion, lider, causal, fechaInicio, fechaFin) {
+            const container = document.getElementById('activeFilters');
+            container.innerHTML = '';
+
+            if (municipio) addFilterTag(container, 'Municipio', municipio, 'filterMunicipio');
+            if (direccion) addFilterTag(container, 'Dirección', direccion, 'filterDireccion');
+            if (lider) addFilterTag(container, 'Líder', lider, 'filterLider');
+            if (causal) addFilterTag(container, 'Causal', causal, 'filterCausal');
+        }
+
+        function addFilterTag(container, label, value, selectId) {
+            const tag = document.createElement('div');
+            tag.className = 'filter-tag';
+            tag.innerHTML = `
+                <span>${label}: ${value}</span>
+                <span class="remove" onclick="removeFilter('${selectId}')">
+                    <i class="fas fa-times"></i>
+                </span>
+            `;
+            container.appendChild(tag);
+        }
+
+        function removeFilter(selectId) {
+            document.getElementById(selectId).value = '';
+            applyFilters();
+        }
+
+        function clearFilters() {
+            document.getElementById('filterMunicipio').value = '';
+            document.getElementById('filterDireccion').value = '';
+            document.getElementById('filterLider').value = '';
+            document.getElementById('filterCausal').value = '';
+
+            const dates = allData.map(d => d.fecha).filter(d => d instanceof Date && !isNaN(d));
+            if (dates.length > 0) {
+                document.getElementById('filterFechaInicio').value = formatDateInput(new Date(Math.min(...dates)));
+                document.getElementById('filterFechaFin').value = formatDateInput(new Date(Math.max(...dates)));
+            }
+
+            document.getElementById('activeFilters').innerHTML = '';
+            filteredData = [...allData];
+            currentPage = 1;
+            updateDashboard();
+        }
+
+        function updateDashboard() {
+            updateKPIs();
+            updateLeaderCards();
+            updateCharts();
+            updateTable();
+        }
+
+        function updateKPIs() {
+            const total = filteredData.length;
+            const municipios = new Set(filteredData.map(d => d.municipio).filter(Boolean)).size;
+            const establecimientos = new Set(filteredData.map(d => d.establecimiento).filter(Boolean)).size;
+            const lideres = new Set(filteredData.map(d => d.lider).filter(Boolean)).size;
+            const direcciones = new Set(filteredData.map(d => d.direccion).filter(Boolean)).size;
+
+            animateCounter('kpiTotal', total);
+            animateCounter('kpiMunicipios', municipios);
+            animateCounter('kpiEstablecimientos', establecimientos);
+            animateCounter('kpiLideres', lideres);
+            animateCounter('kpiDirecciones', direcciones);
+        }
+
+        function animateCounter(id, target) {
+            const el = document.getElementById(id);
+            const start = parseInt(el.textContent) || 0;
+            const duration = 600;
+            const startTime = performance.now();
+
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                el.textContent = Math.round(start + (target - start) * eased);
+                if (progress < 1) requestAnimationFrame(update);
+            }
+            requestAnimationFrame(update);
+        }
+
+        function updateLeaderCards() {
+            const liderCount = {};
+            filteredData.forEach(d => {
+                if (d.lider) {
+                    liderCount[d.lider] = (liderCount[d.lider] || 0) + 1;
+                }
+            });
+
+            const sorted = Object.entries(liderCount).sort((a, b) => b[1] - a[1]);
+            const grid = document.getElementById('leadersGrid');
+            grid.innerHTML = '';
+
+            const gradients = [
+                'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+                'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
+                'linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)',
+                'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)'
+            ];
+
+            sorted.forEach((item, index) => {
+                const [name, count] = item;
+                const percentage = ((count / filteredData.length) * 100).toFixed(1);
+                const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                
+                let rankClass = 'normal';
+                let rankIcon = index + 1;
+                if (index === 0) rankClass = 'gold';
+                else if (index === 1) rankClass = 'silver';
+                else if (index === 2) rankClass = 'bronze';
+
+                const card = document.createElement('div');
+                card.className = 'leader-card';
+                card.innerHTML = `
+                    <div class="leader-rank ${rankClass}">${index === 0 ? '👑' : rankIcon}</div>
+                    <div class="leader-card-top">
+                        <div class="leader-avatar" style="background: ${gradients[index % gradients.length]}">${initials}</div>
+                        <div class="leader-info">
+                            <h3>${name}</h3>
+                            <p>Líder de Aprehensiones</p>
+                        </div>
+                    </div>
+                    <div class="leader-stats">
+                        <div class="leader-stat">
+                            <div class="leader-stat-value">${count}</div>
+                            <div class="leader-stat-label">Aprehensiones</div>
+                        </div>
+                        <div class="leader-stat">
+                            <div class="leader-stat-value">${percentage}%</div>
+                            <div class="leader-stat-label">Participación</div>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            document.getElementById('leadersBadge').textContent = `${sorted.length} Líderes`;
+        }
+
+        function updateCharts() {
+            updateMunicipioChart();
+            updateCausalChart();
+            updateLiderChart();
+            updateDireccionChart();
+            updateTendenciaChart();
+        }
+
+        function getChartColors(count) {
+            const colors = [
+                'rgba(99, 102, 241, 0.8)',
+                'rgba(6, 182, 212, 0.8)',
+                'rgba(16, 185, 129, 0.8)',
+                'rgba(245, 158, 11, 0.8)',
+                'rgba(239, 68, 68, 0.8)',
+                'rgba(168, 85, 247, 0.8)',
+                'rgba(236, 72, 153, 0.8)',
+                'rgba(14, 165, 233, 0.8)',
+                'rgba(34, 197, 94, 0.8)',
+                'rgba(251, 146, 60, 0.8)',
+                'rgba(244, 63, 94, 0.8)',
+                'rgba(139, 92, 246, 0.8)',
+                'rgba(20, 184, 166, 0.8)',
+                'rgba(234, 179, 8, 0.8)',
+                'rgba(249, 115, 22, 0.8)'
+            ];
+            return colors.slice(0, count);
+        }
+
+        function getChartBorderColors(count) {
+            const colors = [
+                'rgba(99, 102, 241, 1)',
+                'rgba(6, 182, 212, 1)',
+                'rgba(16, 185, 129, 1)',
+                'rgba(245, 158, 11, 1)',
+                'rgba(239, 68, 68, 1)',
+                'rgba(168, 85, 247, 1)',
+                'rgba(236, 72, 153, 1)',
+                'rgba(14, 165, 233, 1)',
+                'rgba(34, 197, 94, 1)',
+                'rgba(251, 146, 60, 1)',
+                'rgba(244, 63, 94, 1)',
+                'rgba(139, 92, 246, 1)',
+                'rgba(20, 184, 166, 1)',
+                'rgba(234, 179, 8, 1)',
+                'rgba(249, 115, 22, 1)'
+            ];
+            return colors.slice(0, count);
+        }
+
+        const chartDefaults = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#94a3b8',
+                        font: { family: 'Inter', size: 11 },
+                        padding: 15
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                    titleColor: '#f1f5f9',
+                    bodyColor: '#94a3b8',
+                    borderColor: '#334155',
+                    borderWidth: 1,
+                    cornerRadius: 10,
+                    padding: 12,
+                    titleFont: { family: 'Inter', weight: '600' },
+                    bodyFont: { family: 'Inter' }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: '#64748b', font: { family: 'Inter', size: 11 } },
+                    grid: { color: 'rgba(51, 65, 85, 0.3)' }
+                },
+                y: {
+                    ticks: { color: '#64748b', font: { family: 'Inter', size: 11 } },
+                    grid: { color: 'rgba(51, 65, 85, 0.3)' }
+                }
+            }
+        };
+
+        function updateMunicipioChart() {
+            const counts = {};
+            filteredData.forEach(d => {
+                if (d.municipio) counts[d.municipio] = (counts[d.municipio] || 0) + 1;
+            });
+
+            const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const labels = sorted.map(s => s[0]);
+            const data = sorted.map(s => s[1]);
+
+            if (charts.municipio) charts.municipio.destroy();
+
+            charts.municipio = new Chart(document.getElementById('chartMunicipio'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Aprehensiones',
+                        data,
+                        backgroundColor: getChartColors(labels.length),
+                        borderColor: getChartBorderColors(labels.length),
+                        borderWidth: 1,
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    ...chartDefaults,
+                    plugins: {
+                        ...chartDefaults.plugins,
+                        legend: { display: false }
+                    },
+                    scales: {
+                        ...chartDefaults.scales,
+                        y: {
+                            ...chartDefaults.scales.y,
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCausalChart() {
+            const counts = {};
+            filteredData.forEach(d => {
+                if (d.causal) {
+                    const c = d.causal.length > 30 ? d.causal.substring(0, 30) + '...' : d.causal;
+                    counts[c] = (counts[c] || 0) + 1;
+                }
+            });
+
+            const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+            const labels = sorted.map(s => s[0]);
+            const data = sorted.map(s => s[1]);
+
+            if (charts.causal) charts.causal.destroy();
+
+            charts.causal = new Chart(document.getElementById('chartCausal'), {
+                type: 'doughnut',
+                data: {
+                    labels,
+                    datasets: [{
+                        data,
+                        backgroundColor: getChartColors(labels.length),
+                        borderColor: 'rgba(15, 23, 42, 0.8)',
+                        borderWidth: 3,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#94a3b8',
+                                font: { family: 'Inter', size: 10 },
+                                padding: 12,
+                                usePointStyle: true,
+                                pointStyleWidth: 10
+                            }
+                        },
+                        tooltip: chartDefaults.plugins.tooltip
+                    }
+                }
+            });
+        }
+
+        function updateLiderChart() {
+            const counts = {};
+            filteredData.forEach(d => {
+                if (d.lider) counts[d.lider] = (counts[d.lider] || 0) + 1;
+            });
+
+            const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const labels = sorted.map(s => s[0]);
+            const data = sorted.map(s => s[1]);
+
+            if (charts.lider) charts.lider.destroy();
+
+            charts.lider = new Chart(document.getElementById('chartLider'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Aprehensiones',
+                        data,
+                        backgroundColor: 'rgba(6, 182, 212, 0.3)',
+                        borderColor: 'rgba(6, 182, 212, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    ...chartDefaults,
+                    indexAxis: 'y',
+                    plugins: {
+                        ...chartDefaults.plugins,
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            ...chartDefaults.scales.x,
+                            beginAtZero: true
+                        },
+                        y: {
+                            ...chartDefaults.scales.y,
+                            ticks: { 
+                                color: '#94a3b8', 
+                                font: { family: 'Inter', size: 11 },
+                                callback: function(value) {
+                                    const label = this.getLabelForValue(value);
+                                    return label.length > 18 ? label.substring(0, 18) + '...' : label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateDireccionChart() {
+            const counts = {};
+            filteredData.forEach(d => {
+                if (d.direccion) counts[d.direccion] = (counts[d.direccion] || 0) + 1;
+            });
+
+            const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const labels = sorted.map(s => s[0]);
+            const data = sorted.map(s => s[1]);
+
+            if (charts.direccion) charts.direccion.destroy();
+
+            charts.direccion = new Chart(document.getElementById('chartDireccion'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Aprehensiones',
+                        data,
+                        backgroundColor: 'rgba(16, 185, 129, 0.3)',
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    ...chartDefaults,
+                    indexAxis: 'y',
+                    plugins: {
+                        ...chartDefaults.plugins,
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            ...chartDefaults.scales.x,
+                            beginAtZero: true
+                        },
+                        y: {
+                            ...chartDefaults.scales.y,
+                            ticks: { 
+                                color: '#94a3b8', 
+                                font: { family: 'Inter', size: 10 },
+                                callback: function(value) {
+                                    const label = this.getLabelForValue(value);
+                                    return label.length > 20 ? label.substring(0, 20) + '...' : label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateTendenciaChart() {
+            const counts = {};
+            filteredData.forEach(d => {
+                if (d.fecha instanceof Date && !isNaN(d.fecha)) {
+                    const key = `${d.fecha.getFullYear()}-${String(d.fecha.getMonth() + 1).padStart(2, '0')}-${String(d.fecha.getDate()).padStart(2, '0')}`;
+                    counts[key] = (counts[key] || 0) + 1;
+                }
+            });
+
+            const sorted = Object.entries(counts).sort((a, b) => a[0].localeCompare(b[0]));
+            const labels = sorted.map(s => {
+                const parts = s[0].split('-');
+                return `${parts[2]}/${parts[1]}`;
+            });
+            const data = sorted.map(s => s[1]);
+
+            // Cumulative data
+            let cumulative = 0;
+            const cumulativeData = data.map(d => {
+                cumulative += d;
+                return cumulative;
+            });
+
+            if (charts.tendencia) charts.tendencia.destroy();
+
+            charts.tendencia = new Chart(document.getElementById('chartTendencia'), {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Aprehensiones por día',
+                            data,
+                            borderColor: 'rgba(99, 102, 241, 1)',
+                            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                            borderWidth: 2.5,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 3,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: 'rgba(99, 102, 241, 1)',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Acumulado',
+                            data: cumulativeData,
+                            borderColor: 'rgba(245, 158, 11, 1)',
+                            backgroundColor: 'rgba(245, 158, 11, 0.05)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 0,
+                            pointHoverRadius: 4,
+                            borderDash: [5, 5],
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#94a3b8',
+                                font: { family: 'Inter', size: 11 },
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: chartDefaults.plugins.tooltip
+                    },
+                    scales: {
+                        x: {
+                            ticks: { 
+                                color: '#64748b', 
+                                font: { family: 'Inter', size: 10 },
+                                maxRotation: 45,
+                                autoSkip: true,
+                                maxTicksLimit: 20
+                            },
+                            grid: { color: 'rgba(51, 65, 85, 0.2)' }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            ticks: { color: '#818cf8', font: { family: 'Inter', size: 11 } },
+                            grid: { color: 'rgba(51, 65, 85, 0.2)' },
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Por día',
+                                color: '#818cf8',
+                                font: { family: 'Inter', size: 11 }
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            ticks: { color: '#fbbf24', font: { family: 'Inter', size: 11 } },
+                            grid: { drawOnChartArea: false },
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Acumulado',
+                                color: '#fbbf24',
+                                font: { family: 'Inter', size: 11 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateTable() {
+            const searchTerm = document.getElementById('tableSearch').value.toLowerCase();
+            let displayData = filteredData;
+
+            if (searchTerm) {
+                displayData = filteredData.filter(d =>
+                    Object.values(d).some(v =>
+                        String(v).toLowerCase().includes(searchTerm)
+                    )
+                );
+            }
+
+            if (sortColumn >= 0) {
+                const keys = ['acta', 'fecha', 'establecimiento', 'propietario', 'municipio', 'direccion', 'causal', 'lider'];
+                const key = keys[sortColumn];
+                displayData.sort((a, b) => {
+                    let va = a[key], vb = b[key];
+                    if (va instanceof Date) va = va.getTime();
+                    if (vb instanceof Date) vb = vb.getTime();
+                    if (typeof va === 'string') va = va.toLowerCase();
+                    if (typeof vb === 'string') vb = vb.toLowerCase();
+                    if (va < vb) return sortDirection === 'asc' ? -1 : 1;
+                    if (va > vb) return sortDirection === 'asc' ? 1 : -1;
+                    return 0;
+                });
+            }
+
+            const totalPages = Math.ceil(displayData.length / rowsPerPage);
+            if (currentPage > totalPages) currentPage = totalPages || 1;
+
+            const start = (currentPage - 1) * rowsPerPage;
+            const pageData = displayData.slice(start, start + rowsPerPage);
+
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            pageData.forEach(d => {
+                const tr = document.createElement('tr');
+                
+                let causalClass = '';
+                const causalLower = (d.causal || '').toLowerCase();
+                if (causalLower.includes('vencido')) causalClass = 'causal-vencido';
+                else if (causalLower.includes('estampilla')) causalClass = 'causal-estampilla';
+                else if (causalLower.includes('señaliz') || causalLower.includes('senaliz')) causalClass = 'causal-senalizacion';
+                else if (causalLower.includes('ingreso')) causalClass = 'causal-ingreso';
+
+                tr.innerHTML = `
+                    <td><span class="cell-acta">${d.acta}</span></td>
+                    <td>${formatDate(d.fecha)}</td>
+                    <td class="cell-establecimiento" title="${d.establecimiento}">${d.establecimiento}</td>
+                    <td>${d.propietario}</td>
+                    <td><span class="cell-municipio">${d.municipio}</span></td>
+                    <td>${d.direccion}</td>
+                    <td><span class="cell-causal-tag ${causalClass}">${d.causal}</span></td>
+                    <td><span class="cell-lider-tag"><i class="fas fa-user"></i>${d.lider}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Update counts
+            document.getElementById('showingCount').textContent = displayData.length;
+            document.getElementById('totalCount').textContent = allData.length;
+
+            // Update pagination
+            updatePagination(displayData.length, totalPages);
+        }
+
+        function updatePagination(total, totalPages) {
+            const info = document.getElementById('paginationInfo');
+            const start = (currentPage - 1) * rowsPerPage + 1;
+            const end = Math.min(currentPage * rowsPerPage, total);
+            info.textContent = total > 0 
+                ? `Mostrando ${start}-${end} de ${total} registros`
+                : 'No hay registros';
+
+            const controls = document.getElementById('paginationControls');
+            controls.innerHTML = '';
+
+            if (totalPages <= 1) return;
+
+            // Previous
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'page-btn';
+            prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.onclick = () => { currentPage--; updateTable(); };
+            controls.appendChild(prevBtn);
+
+            // Page numbers
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+
+            for (let i = startPage; i <= endPage; i++) {
+                const btn = document.createElement('button');
+                btn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+                btn.textContent = i;
+                btn.onclick = () => { currentPage = i; updateTable(); };
+                controls.appendChild(btn);
+            }
+
+            // Next
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'page-btn';
+            nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            nextBtn.disabled = currentPage === totalPages;
+            nextBtn.onclick = () => { currentPage++; updateTable(); };
+            controls.appendChild(nextBtn);
+        }
